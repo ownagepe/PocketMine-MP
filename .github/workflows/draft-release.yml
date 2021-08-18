@@ -6,7 +6,7 @@ on:
 
 jobs:
   server:
-    name: Create GitHub draft release
+    name: Build PocketMine-MP release artifacts
     if: "startsWith(github.event.head_commit.message, 'Release ')"
     runs-on: ubuntu-20.04
     strategy:
