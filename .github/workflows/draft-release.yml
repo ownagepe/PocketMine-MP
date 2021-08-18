@@ -5,7 +5,7 @@ on:
     tags: "*"
 
 jobs:
-  draft:
+  server:
     name: Create GitHub draft release
     if: "startsWith(github.event.head_commit.message, 'Release ')"
     runs-on: ubuntu-20.04
@@ -90,10 +90,91 @@ jobs:
             ${{ github.workspace }}/start.*
             ${{ github.workspace }}/build_info.json
 
+      - name: Upload preprocessor diffs
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: preprocessor_diffs
+          path: ${{ github.workspace }}/preprocessor_diff*.patch
+
+  phpstorm-plugin:
+    name: Build PhpStorm plugin
+    runs-on: ubuntu-latest
+    needs: server
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install tools
+        run: sudo apt update && sudo apt install jq xmlstarlet zip
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.12.0
+        with:
+          php-version: 8.0
+
+      - name: Get actual tag name
+        id: tag-name
+        run: echo ::set-output name=TAG_NAME::$(echo "${{ github.ref }}" | sed 's{^refs/tags/{{')
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: release_artifacts
+          path: ${{ github.workspace }}
+
+      - name: Extract PocketMine-MP.phar
+        run: phar extract -f PocketMine-MP.phar stage/library/PocketMine-MP
+
+      - name: Generate HTML changelog
+        id: changelog
+        run: |
+          CHANGELOG_MD=$(curl -f https://api.github.com/repos/pmmp/PocketMine-MP/releases/tags/${{ steps.tag-name.outputs.TAG_NAME }} | jq .body -r)
+          echo ::set-output name=CHANGELOG:$(curl -f https://api.github.com/markdown -X POST -d "$(jq -n --arg body "$CHANGELOG_MD" '{"text":$body,"mode":"gfm","context":"pmmp/PocketMine-MP"}')")
+
+      - name: Generate plugin.xml
+        run: |
+          curl -f -o tmp.xml https://gist.githubusercontent.com/SOF3/5cc4d0c67c7094d8599b846be1e5f99e/raw/65f7a3f959ca60d90ad2bcddd183109262703dcb/default-plugin.xml
+          xmlstarlet ed -u /idea-plugin/version -v ${{ steps.tag-name.outputs.TAG_NAME }} tmp.xml > tmp2.xml
+          mkdir -p stage/META-INF/
+          xmlstarlet ed -u /idea-plugin/change-notes -v "${{ steps.changelog.outputs.CHANGELOG }}" tmp2.xml > stage/META-INF/plugin.xml
+
+      - name: Package plugin
+        run: |
+          cd stage
+          zip -qr ../PhpStorm-Plugin.jar .
+
+      - name: Store plugin.jar artifact
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: phpstorm_plugin
+          path: PhpStorm-Plugin.jar
+
+  draft-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    needs:
+      - server
+      - phpstorm-plugin
+
+    steps:
+      - name: Download server built artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: release_artifacts
+          path: ${{ github.workspace }}
+
+      - name: Download PhpStorm plugin artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: phpstorm_plugin
+          path: ${{ github.workspace }}
+
       - name: Create draft release
         uses: ncipollo/release-action@v1.8.6
         with:
-          artifacts: ${{ github.workspace }}/PocketMine-MP.phar,${{ github.workspace }}/start.*,${{ github.workspace }}/build_info.json
+          artifacts: ${{ github.workspace }}/PocketMine-MP.phar,${{ github.workspace }}/start.*,${{ github.workspace }}/build_info.json,${{ github.workspace }}/PhpStorm-Plugin.jar
           commit: ${{ github.sha }}
           draft: true
           name: PocketMine-MP ${{ steps.get-pm-version.outputs.PM_VERSION }}
@@ -103,11 +184,3 @@ jobs:
             **For Minecraft: Bedrock Edition ${{ steps.get-pm-version.outputs.MCPE_VERSION }}**
 
             Please see the [changelogs](/changelogs/${{ steps.get-pm-version.outputs.PM_VERSION_SHORT }}.md#${{ steps.get-pm-version.outputs.PM_VERSION_MD }}) for details.
-
-      - name: Upload preprocessor diffs
-        uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: preprocessor_diffs
-          path: ${{ github.workspace }}/preprocessor_diff*.patch
-
