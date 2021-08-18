@@ -23,8 +23,6 @@ jobs:
         id: tag-name
         run: echo ::set-output name=TAG_NAME::$(echo "${{ github.ref }}" | sed 's{^refs/tags/{{')
 
-      - name: Download new release information
-  
       - name: Download PocketMine-MP.phar
         run: curl -f -L ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.tag-name.outputs.TAG_NAME }}/PocketMine-MP.phar -o PocketMine-MP.phar
  
