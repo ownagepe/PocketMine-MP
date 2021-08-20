@@ -32,6 +32,7 @@ use pocketmine\network\mcpe\protocol\ResourcePackDataInfoPacket;
 use pocketmine\network\mcpe\protocol\ResourcePacksInfoPacket;
 use pocketmine\network\mcpe\protocol\ResourcePackStackPacket;
 use pocketmine\network\mcpe\protocol\types\Experiments;
+use pocketmine\network\mcpe\protocol\types\resourcepacks\BehaviorPackInfoEntry;
 use pocketmine\network\mcpe\protocol\types\resourcepacks\ResourcePackInfoEntry;
 use pocketmine\network\mcpe\protocol\types\resourcepacks\ResourcePackStackEntry;
 use pocketmine\resourcepacks\ResourcePack;
@@ -77,8 +78,9 @@ class ResourcePacksPacketHandler extends PacketHandler{
 			//TODO: more stuff
 			return new ResourcePackInfoEntry($pack->getPackId(), $pack->getPackVersion(), $pack->getPackSize(), "", "", "", false);
 		}, $this->resourcePackManager->getResourceStack());
+		$behaviorPackEntries = array_map(static fn(ResourcePack $pack) => new BehaviorPackInfoEntry($pack->getPackId(), $pack->getPackVersion(), $pack->getPackSize(), "", "", "", false), $this->behaviorPackManager->getResourceStack());
 		//TODO: support forcing server packs
-		$this->session->sendDataPacket(ResourcePacksInfoPacket::create($resourcePackEntries, [], $this->resourcePackManager->resourcePacksRequired(), false, false));
+		$this->session->sendDataPacket(ResourcePacksInfoPacket::create($resourcePackEntries, $behaviorPackEntries, $this->resourcePackManager->resourcePacksRequired(), false, false));
 		$this->session->getLogger()->debug("Waiting for client to accept resource packs");
 	}
 
@@ -100,7 +102,7 @@ class ResourcePacksPacketHandler extends PacketHandler{
 					if($splitPos !== false){
 						$uuid = substr($uuid, 0, $splitPos);
 					}
-					$pack = $this->resourcePackManager->getPackById($uuid);
+					$pack = $this->resourcePackManager->getPackById($uuid) ?? $this->behaviorPackManager->getPackById($uuid);
 
 					if(!($pack instanceof ResourcePack)){
 						//Client requested a resource pack but we don't have it available on the server
@@ -120,17 +122,19 @@ class ResourcePacksPacketHandler extends PacketHandler{
 
 				break;
 			case ResourcePackClientResponsePacket::STATUS_HAVE_ALL_PACKS:
-				$stack = array_map(static function(ResourcePack $pack) : ResourcePackStackEntry{
+				$resourcePackStack = array_map(static function(ResourcePack $pack) : ResourcePackStackEntry{
 					return new ResourcePackStackEntry($pack->getPackId(), $pack->getPackVersion(), ""); //TODO: subpacks
 				}, $this->resourcePackManager->getResourceStack());
 
 				//we support chemistry blocks by default, the client should already have this installed
-				$stack[] = new ResourcePackStackEntry("0fba4063-dba1-4281-9b89-ff9390653530", "1.0.0", "");
+				$resourcePackStack[] = new ResourcePackStackEntry("0fba4063-dba1-4281-9b89-ff9390653530", "1.0.0", "");
 
+				$behaviorPackStack = array_map(static fn(ResourcePack $pack) => new ResourcePackStackEntry($pack->getPackId(), $pack->getPackVersion(), ""), $this->behaviorPackManager->getResourceStack());
 				//we don't force here, because it doesn't have user-facing effects
 				//but it does have an annoying side-effect when true: it makes
 				//the client remove its own non-server-supplied resource packs.
-				$this->session->sendDataPacket(ResourcePackStackPacket::create($stack, [], false, new Experiments([], false)));
+
+				$this->session->sendDataPacket(ResourcePackStackPacket::create($resourcePackStack, $behaviorPackStack, false, new Experiments([], false)));
 				$this->session->getLogger()->debug("Applying resource pack stack");
 				break;
 			case ResourcePackClientResponsePacket::STATUS_COMPLETED:
@@ -145,7 +149,7 @@ class ResourcePacksPacketHandler extends PacketHandler{
 	}
 
 	public function handleResourcePackChunkRequest(ResourcePackChunkRequestPacket $packet) : bool{
-		$pack = $this->resourcePackManager->getPackById($packet->packId);
+		$pack = $this->resourcePackManager->getPackById($packet->packId) ?? $this->behaviorPackManager->getPackById($packet->packId);
 		if(!($pack instanceof ResourcePack)){
 			$this->disconnectWithError("Invalid request for chunk $packet->chunkIndex of unknown pack $packet->packId, available packs: " . implode(", ", $this->resourcePackManager->getPackIdList()));
 			return false;

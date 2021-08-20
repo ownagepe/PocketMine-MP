@@ -213,6 +213,7 @@ class Server{
 	private CraftingManager $craftingManager;
 
 	private ResourcePackManager $resourceManager;
+	private ResourcePackManager $behaviorPackManager;
 
 	private WorldManager $worldManager;
 
@@ -379,6 +380,10 @@ class Server{
 
 	public function getResourcePackManager() : ResourcePackManager{
 		return $this->resourceManager;
+	}
+
+	public function getBehaviorPackManager() : ResourcePackManager{
+		return $this->behaviorPackManager;
 	}
 
 	public function getWorldManager() : WorldManager{
@@ -920,6 +925,7 @@ class Server{
 			$this->craftingManager = CraftingManagerFromDataHelper::make(Path::join(\pocketmine\RESOURCE_PATH, "vanilla", "recipes.json"));
 
 			$this->resourceManager = new ResourcePackManager(Path::join($this->getDataPath(), "resource_packs"), $this->logger);
+			$this->behaviorPackManager = new ResourcePackManager(Path::join($this->getDataPath(), "behavior_packs"), $this->logger);
 
 			$pluginGraylist = null;
 			$graylistFile = Path::join($this->dataPath, "plugin_list.yml");
