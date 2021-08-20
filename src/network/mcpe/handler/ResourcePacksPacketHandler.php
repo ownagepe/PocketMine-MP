@@ -67,7 +67,7 @@ class ResourcePacksPacketHandler extends PacketHandler{
 	/**
 	 * @phpstan-param \Closure() : void $completionCallback
 	 */
-	public function __construct(NetworkSession $session, ResourcePackManager $resourcePackManager, \Closure $completionCallback){
+	public function __construct(NetworkSession $session, ResourcePackManager $resourcePackManager, private ResourcePackManager $behaviorPackManager, \Closure $completionCallback){
 		$this->session = $session;
 		$this->resourcePackManager = $resourcePackManager;
 		$this->completionCallback = $completionCallback;
