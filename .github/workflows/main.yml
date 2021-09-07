@@ -193,8 +193,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [ubuntu-20.04]
-        php: [7.4.22, 8.0.9]
+        include:
+          - php: 8.0.9
+            config: phpstan.neon.dist
+            image: ubuntu-20.04
+          - php: 7.4.22
+            config: phpstan.php7.neon
+            image: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
@@ -259,6 +264,9 @@ jobs:
               echo "No diff generated for \"$f\" (preprocessor made no changes)"
             fi
           done
+
+      - name: Run PHPStan
+        run: ./vendor/bin/phpstan analyze --no-progress --memory-limit=2G -c ${{ matrix.config }}
 
       - name: Upload preprocessor diffs
         uses: actions/upload-artifact@v2
