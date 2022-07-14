@@ -1,11 +1,11 @@
 ## Features/Changes
-- Support for v1.19
+- Support for v1.19.10
 - Server will not crash from errors (unless a crashloop occurs)
 - Removed internal server error
 - Compatible with plugins using `ItemBlock::write()` methods
 
 ## How to get compiled version?
-- Get a compiled `.phar` version from [here](https://github.com/ownagepe/PocketMine-MP/releases/tag/1.19.0)
+- Get a compiled `.phar` version from [here](https://github.com/ownagepe/PocketMine-MP/releases/tag/1.19.10)
 
 ## Why would you make these changes?
 - Production servers can't be frequently dealing with server crashes as that will affect the playerbase, so instead we prevent the crash from happening and log it to patch later

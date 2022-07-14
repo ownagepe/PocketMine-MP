@@ -2306,6 +2306,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$pk->playerGamemode = Player::getClientFriendlyGamemode($this->gamemode);
 
 		$pk->playerPosition = $this->getOffsetPosition($this);
+		$pk->editorWorld = false;
 
 		$pk->pitch = $this->pitch;
 		$pk->yaw = $this->yaw;
