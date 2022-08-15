@@ -32,7 +32,7 @@ if(defined('pocketmine\_VERSION_INFO_INCLUDED')){
 }
 const _VERSION_INFO_INCLUDED = true;
 
-const NAME = "PocketMine-MP_OWPE";
-const BASE_VERSION = "3.30.0";
+const NAME = "PocketMine_OWPE";
+const BASE_VERSION = "3.31.0";
 const IS_DEVELOPMENT_BUILD = false;
 const BUILD_CHANNEL = "pm3";

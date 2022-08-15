@@ -328,6 +328,10 @@ class StartGamePacket extends DataPacket{
 		$this->putBool($this->isFromWorldTemplate);
 		$this->putBool($this->isWorldTemplateOptionLocked);
 		$this->putBool($this->onlySpawnV1Villagers);
+
+		$this->putByte(0); // Disable persona skins
+		$this->putByte(0); // Disable custom skins
+
 		$this->putString($this->vanillaVersion);
 		$this->putLInt($this->limitedWorldWidth);
 		$this->putLInt($this->limitedWorldLength);
@@ -338,6 +342,10 @@ class StartGamePacket extends DataPacket{
 			$this->putBool($this->experimentalGameplayOverride);
 		}
 
+		$this->putByte(0); // Chat restriction level
+        $this->putByte(0); // Disable player interactions
+
+		// level settings
 		$this->putString($this->levelId);
 		$this->putString($this->worldName);
 		$this->putString($this->premiumWorldTemplateId);
@@ -366,6 +374,8 @@ class StartGamePacket extends DataPacket{
 		$this->put((new NetworkLittleEndianNBTStream())->write($this->actorproperties));
 		$this->putLLong($this->blockPaletteChecksum);
 		$this->putUUID($this->worldTemplateID);
+
+		$this->putByte(0); // Enable client side chunk generation
 	}
 
 	public function handle(NetworkSession $session) : bool{

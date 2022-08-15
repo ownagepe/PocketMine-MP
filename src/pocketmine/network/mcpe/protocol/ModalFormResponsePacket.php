@@ -35,9 +35,12 @@ class ModalFormResponsePacket extends DataPacket{
 	/** @var string */
 	public $formData; //json
 
+    public $cancelReason;
+
 	protected function decodePayload(){
 		$this->formId = $this->getUnsignedVarInt();
-		$this->formData = $this->getString();
+		$this->formData = $this->getByte() === 1 ? $this->getString() : null;
+		$this->cancelReason = $this->getByte() === 1 ? $this->getByte() : null;
 	}
 
 	protected function encodePayload(){
