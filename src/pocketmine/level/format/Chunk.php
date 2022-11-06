@@ -879,7 +879,7 @@ class Chunk{
 		$result = "";
 		foreach($this->tiles as $tile){
 			if($tile instanceof Spawnable){
-				$result .= $tile->getSerializedSpawnCompound();
+				$result .= $tile->getBaseSerializedSpawnCompound();
 			}
 		}
 

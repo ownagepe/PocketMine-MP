@@ -383,19 +383,23 @@ class NetworkBinaryStream extends BinaryStream{
 	}
 
 	public function putRecipeIngredient(Item $item) : void{
+		$this->putByte(1);
 		if($item->isNull()){
-			$this->putVarInt(0);
+			$this->putLShort(0);
 		}else{
-			if($item->hasAnyDamageValue()){
-				[$netId, ] = ItemTranslator::getInstance()->toNetworkId($item->getId(), 0);
+			if($item->hasAnyDamageValue()) {
+				[$netId,] = ItemTranslator::getInstance()->toNetworkId($item->getId(), 0);
 				$netData = 0x7fff;
 			}else{
-				[$netId, $netData] = ItemTranslator::getInstance()->toNetworkId($item->getId(), $item->getDamage());
+				[
+					$netId,
+					$netData
+				] = ItemTranslator::getInstance()->toNetworkId($item->getId(), $item->getDamage());
 			}
-			$this->putVarInt($netId);
-			$this->putVarInt($netData);
-			$this->putVarInt($item->getCount());
+			$this->putLShort($netId);
+			$this->putLShort($netData);
 		}
+		$this->putVarInt($item->getCount());
 	}
 
 	/**
@@ -549,7 +553,8 @@ class NetworkBinaryStream extends BinaryStream{
 			$this->putLFloat($attribute->getValue());
 			$this->putLFloat($attribute->getDefaultValue());
 			$this->putString($attribute->getName());
-			$this->putVarInt(0); // modifier count
+
+			$this->putUnsignedVarInt(0);
 		}
 	}
 

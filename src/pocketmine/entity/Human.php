@@ -53,11 +53,16 @@ use pocketmine\network\mcpe\protocol\LevelEventPacket;
 use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 use pocketmine\network\mcpe\protocol\PlayerListPacket;
 use pocketmine\network\mcpe\protocol\PlayerSkinPacket;
+use pocketmine\network\mcpe\protocol\types\command\CommandPermission;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
+use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\types\SkinAdapterSingleton;
+use pocketmine\network\mcpe\protocol\types\UpdateAbilitiesPacketLayer;
+use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\Player;
 use pocketmine\utils\UUID;
+use slapper\entities\SlapperHuman;
 use function array_filter;
 use function array_merge;
 use function array_rand;
@@ -799,6 +804,41 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 		}
 	}
 
+	public function getAllowFlight(){
+		if($this instanceof Player){
+			return $this->getAllowFlight();
+		}
+		return false;
+	}
+
+	public function isFlying(){
+		if($this instanceof Player){
+			return $this->isFlying();
+		}
+		return false;
+	}
+
+
+	public function isSpectator(){
+		if($this instanceof Player){
+			return $this->isSpectator();
+		}
+		return false;
+	}
+
+	public function isOp(){
+		if($this instanceof Player){
+			return $this->isOp();
+		}
+		return false;
+	}
+	public function isCreative(){
+		if($this instanceof Player){
+			return $this->isCreative();
+		}
+		return false;
+	}
+
 	protected function sendSpawnPacket(Player $player) : void{
 		$this->skin->validate();
 
@@ -820,11 +860,42 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 		$pk->pitch = $this->pitch;
 		$pk->item = ItemStackWrapper::legacy($this->getInventory()->getItemInHand());
 		$pk->metadata = $this->propertyManager->getAll();
-        if($this instanceof  Player){
+
+		if($this instanceof Player){
 			$pk->gamemode = $this->getGamemode();
 		}else{
 			$pk->gamemode = 1;
 		}
+		$boolAbilities = [
+			UpdateAbilitiesPacketLayer::ABILITY_ALLOW_FLIGHT => $this->getAllowFlight(),
+			UpdateAbilitiesPacketLayer::ABILITY_FLYING => $this->isFlying(),
+			UpdateAbilitiesPacketLayer::ABILITY_NO_CLIP => $this->isSpectator(),
+			UpdateAbilitiesPacketLayer::ABILITY_OPERATOR => $this->isOp(),
+			UpdateAbilitiesPacketLayer::ABILITY_TELEPORT => $this->isOp(),
+			UpdateAbilitiesPacketLayer::ABILITY_INVULNERABLE => $this->isCreative(),
+			UpdateAbilitiesPacketLayer::ABILITY_MUTED => false,
+			UpdateAbilitiesPacketLayer::ABILITY_WORLD_BUILDER => false,
+			UpdateAbilitiesPacketLayer::ABILITY_INFINITE_RESOURCES => $this->isCreative(),
+			UpdateAbilitiesPacketLayer::ABILITY_LIGHTNING => false,
+			UpdateAbilitiesPacketLayer::ABILITY_BUILD => !$this->isSpectator(),
+			UpdateAbilitiesPacketLayer::ABILITY_MINE => !$this->isSpectator(),
+			UpdateAbilitiesPacketLayer::ABILITY_DOORS_AND_SWITCHES => !$this->isSpectator(),
+			UpdateAbilitiesPacketLayer::ABILITY_OPEN_CONTAINERS => !$this->isSpectator(),
+			UpdateAbilitiesPacketLayer::ABILITY_ATTACK_PLAYERS => !$this->isSpectator(),
+			UpdateAbilitiesPacketLayer::ABILITY_ATTACK_MOBS => !$this->isSpectator(),
+		];
+
+		$ab = UpdateAbilitiesPacket::create(
+			$this->isOp() ? CommandPermission::OPERATOR : CommandPermission::NORMAL,
+			$this->isOp() ? PlayerPermissions::OPERATOR : PlayerPermissions::MEMBER,
+			$this->getId(),
+			[
+				//TODO: dynamic flying speed! FINALLY!!!!!!!!!!!!!!!!!
+				new UpdateAbilitiesPacketLayer(UpdateAbilitiesPacketLayer::LAYER_BASE, $boolAbilities, 0.05, 0.1),
+			]
+		);
+		$pk->packet = $ab;
+
 		$player->dataPacket($pk);
 
 		//TODO: Hack for MCPE 1.2.13: DATA_NAMETAG is useless in AddPlayerPacket, so it has to be sent separately
@@ -839,7 +910,6 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 			$player->dataPacket($pk);
 		}
 	}
-
 
 	public function close() : void{
 		if(!$this->closed){

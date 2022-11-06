@@ -29,6 +29,7 @@ use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\types\DeviceOS;
 use pocketmine\network\mcpe\protocol\types\EntityLink;
+use pocketmine\network\mcpe\protocol\types\GameMode;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\utils\UUID;
 use function count;
@@ -58,20 +59,13 @@ class AddPlayerPacket extends DataPacket{
 	public $headYaw = null; //TODO
 	/** @var ItemStackWrapper */
 	public $item;
+	/** @var int */
+	public $gamemode = GameMode::SURVIVAL;
 	/**
 	 * @var mixed[][]
 	 * @phpstan-var array<int, array{0: int, 1: mixed}>
 	 */
 	public $metadata = [];
-
-
-
-	public $playerPermissions = AdventureSettingsPacket::PERMISSION_NORMAL;
-
-	public $commandPermissions = 0;
-
-	/** @var int */
-	public $long1 = 0;
 
 	/** @var EntityLink[] */
 	public $links = [];
@@ -80,8 +74,8 @@ class AddPlayerPacket extends DataPacket{
 	public $deviceId = ""; //TODO: fill player's device ID (???)
 	/** @var int */
 	public $buildPlatform = DeviceOS::UNKNOWN;
-    /** @var int */
-    public $gamemode = 0;
+
+	public ?UpdateAbilitiesPacket $packet = null;
 
 	protected function decodePayload(){
 		$this->uuid = $this->getUUID();
@@ -94,21 +88,11 @@ class AddPlayerPacket extends DataPacket{
 		$this->yaw = $this->getLFloat();
 		$this->headYaw = $this->getLFloat();
 		$this->item = ItemStackWrapper::read($this);
-        $this->gamemode = $this->getVarInt();
+		$this->gamemode = $this->getVarInt();
 		$this->metadata = $this->getEntityMetadata();
 
-        $this->entityUniqueId = $this->getEntityUniqueId();
-        $this->playerPermissions = $this->getByte();
-        $this->commandPermissions = $this->getByte();
-
-        /*
-		$this->uvarint1 = $this->getUnsignedVarInt();
-		$this->uvarint2 = $this->getUnsignedVarInt();
-		$this->uvarint3 = $this->getUnsignedVarInt();
-		$this->uvarint4 = $this->getUnsignedVarInt();
-		$this->uvarint5 = $this->getUnsignedVarInt();
-*/
-		$this->long1 = $this->getLLong();
+		$this->packet = new UpdateAbilitiesPacket();
+		$this->packet->decodeData($this);
 
 		$linkCount = $this->getUnsignedVarInt();
 		for($i = 0; $i < $linkCount; ++$i){
@@ -130,14 +114,17 @@ class AddPlayerPacket extends DataPacket{
 		$this->putLFloat($this->yaw);
 		$this->putLFloat($this->headYaw ?? $this->yaw);
 		$this->item->write($this);
-        $this->putVarInt($this->gamemode);
+		$this->putVarInt($this->gamemode);
 		$this->putEntityMetadata($this->metadata);
+        $this->putVarInt(0);
+        $this->putVarInt(0);
 
-        $this->putLLong($this->entityUniqueId ?? $this->entityRuntimeId);
-        $this->putByte($this->commandPermissions);
-        $this->putByte($this->playerPermissions);
-        // Number of ability layers
-        $this->putByte(0);
+		if($this->packet === null){
+			$this->packet = new UpdateAbilitiesPacket();
+		}
+
+		$this->packet->encodeData($this);
+
 
 
 		$this->putUnsignedVarInt(count($this->links));

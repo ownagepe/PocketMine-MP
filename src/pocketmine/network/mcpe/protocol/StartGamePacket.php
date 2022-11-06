@@ -27,7 +27,6 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\math\Vector3;
 use pocketmine\nbt\NetworkLittleEndianNBTStream;
-use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\EducationEditionOffer;
@@ -79,7 +78,6 @@ class StartGamePacket extends DataPacket{
 	public $spawnZ;
 	/** @var bool */
 	public $hasAchievementsDisabled = true;
-	public bool $editorWorld = false;
 	/** @var int */
 	public $time = -1;
 	/** @var int */
@@ -187,11 +185,6 @@ class StartGamePacket extends DataPacket{
 
 	public int $blockPaletteChecksum;
 
-	public ?CompoundTag $actorproperties;
-	public UUID $worldTemplateID;
-
-
-
 	protected function decodePayload(){
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
@@ -203,14 +196,14 @@ class StartGamePacket extends DataPacket{
 		$this->yaw = $this->getLFloat();
 
 		//Level settings
-		$this->seed = $this->getLLong();
+		$this->seed = $this->getVarLong();
 		$this->spawnSettings = SpawnSettings::read($this);
 		$this->generator = $this->getVarInt();
 		$this->worldGamemode = $this->getVarInt();
 		$this->difficulty = $this->getVarInt();
 		$this->getBlockPosition($this->spawnX, $this->spawnY, $this->spawnZ);
 		$this->hasAchievementsDisabled = $this->getBool();
-		$this->editorWorld = $this->getBool();
+		$this->getBool();
 		$this->time = $this->getVarInt();
 		$this->eduEditionOffer = $this->getVarInt();
 		$this->hasEduFeaturesEnabled = $this->getBool();
@@ -228,7 +221,7 @@ class StartGamePacket extends DataPacket{
 		$this->experiments = Experiments::read($this);
 		$this->hasBonusChestEnabled = $this->getBool();
 		$this->hasStartWithMapEnabled = $this->getBool();
-		$this->defaultPlayerPermission = $this->getByte();
+		$this->defaultPlayerPermission = $this->getVarInt();
 		$this->serverChunkTickRadius = $this->getLInt();
 		$this->hasLockedBehaviorPack = $this->getBool();
 		$this->hasLockedResourcePack = $this->getBool();
@@ -237,6 +230,8 @@ class StartGamePacket extends DataPacket{
 		$this->isFromWorldTemplate = $this->getBool();
 		$this->isWorldTemplateOptionLocked = $this->getBool();
 		$this->onlySpawnV1Villagers = $this->getBool();
+		$this->getBool();
+		$this->getBool();
 		$this->vanillaVersion = $this->getString();
 		$this->limitedWorldWidth = $this->getLInt();
 		$this->limitedWorldLength = $this->getLInt();
@@ -247,6 +242,8 @@ class StartGamePacket extends DataPacket{
 		}else{
 			$this->experimentalGameplayOverride = null;
 		}
+		$this->getByte();
+		$this->getBool();
 
 		$this->levelId = $this->getString();
 		$this->worldName = $this->getString();
@@ -276,10 +273,10 @@ class StartGamePacket extends DataPacket{
 		$this->multiplayerCorrelationId = $this->getString();
 		$this->enableNewInventorySystem = $this->getBool();
 		$this->serverSoftwareVersion = $this->getString();
-
-		$this->actorproperties = $this->getNbtCompoundRoot();
+		$this->getNbtCompoundRoot();
 		$this->blockPaletteChecksum = $this->getLLong();
-		$this->worldTemplateID = $this->getUUID();
+		$this->getUUID();
+		$this->getBool();
 	}
 
 	protected function encodePayload(){
@@ -293,15 +290,14 @@ class StartGamePacket extends DataPacket{
 		$this->putLFloat($this->yaw);
 
 		//Level settings
-		$this->putLLong($this->seed);
+		$this->putLong($this->seed);
 		$this->spawnSettings->write($this);
 		$this->putVarInt($this->generator);
 		$this->putVarInt($this->worldGamemode);
 		$this->putVarInt($this->difficulty);
 		$this->putBlockPosition($this->spawnX, $this->spawnY, $this->spawnZ);
 		$this->putBool($this->hasAchievementsDisabled);
-		// Editor mode
-		$this->putByte(0);
+		$this->putBool(false);
 		$this->putVarInt($this->time);
 		$this->putVarInt($this->eduEditionOffer);
 		$this->putBool($this->hasEduFeaturesEnabled);
@@ -319,7 +315,7 @@ class StartGamePacket extends DataPacket{
 		$this->experiments->write($this);
 		$this->putBool($this->hasBonusChestEnabled);
 		$this->putBool($this->hasStartWithMapEnabled);
-		$this->putByte($this->defaultPlayerPermission);
+		$this->putVarInt($this->defaultPlayerPermission);
 		$this->putLInt($this->serverChunkTickRadius);
 		$this->putBool($this->hasLockedBehaviorPack);
 		$this->putBool($this->hasLockedResourcePack);
@@ -328,24 +324,17 @@ class StartGamePacket extends DataPacket{
 		$this->putBool($this->isFromWorldTemplate);
 		$this->putBool($this->isWorldTemplateOptionLocked);
 		$this->putBool($this->onlySpawnV1Villagers);
-
-		$this->putByte(0); // Disable persona skins
-		$this->putByte(0); // Disable custom skins
-
+		$this->putBool(true);
+		$this->putBool(true);
 		$this->putString($this->vanillaVersion);
 		$this->putLInt($this->limitedWorldWidth);
 		$this->putLInt($this->limitedWorldLength);
 		$this->putBool($this->isNewNether);
 		($this->eduSharedUriResource ?? new EducationUriResource("", ""))->write($this);
 		$this->putBool($this->experimentalGameplayOverride !== null);
-		if($this->experimentalGameplayOverride !== null){
-			$this->putBool($this->experimentalGameplayOverride);
-		}
+		$this->putByte(0);
+		$this->putBool(false);
 
-		$this->putByte(0); // Chat restriction level
-        $this->putByte(0); // Disable player interactions
-
-		// level settings
 		$this->putString($this->levelId);
 		$this->putString($this->worldName);
 		$this->putString($this->premiumWorldTemplateId);
@@ -371,11 +360,11 @@ class StartGamePacket extends DataPacket{
 		$this->putString($this->multiplayerCorrelationId);
 		$this->putBool($this->enableNewInventorySystem);
 		$this->putString($this->serverSoftwareVersion);
-		$this->put((new NetworkLittleEndianNBTStream())->write($this->actorproperties));
+		$this->putString("");
 		$this->putLLong($this->blockPaletteChecksum);
-		$this->putUUID($this->worldTemplateID);
-
-		$this->putByte(0); // Enable client side chunk generation
+		$uuid = UUID::fromRandom();
+		$this->putUUID($uuid);
+		$this->putBool(false);
 	}
 
 	public function handle(NetworkSession $session) : bool{

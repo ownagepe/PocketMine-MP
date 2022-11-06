@@ -64,7 +64,7 @@ class AvailableCommandsPacket extends DataPacket{
 
 	public const ARG_TYPE_MESSAGE = 0x2c;
 
-	public const ARG_TYPE_RAWTEXT = 0x2e;
+	public const ARG_TYPE_RAWTEXT = 0x35;
 
 	public const ARG_TYPE_JSON = 0x32;
 

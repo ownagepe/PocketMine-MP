@@ -28,6 +28,7 @@ use pocketmine\network\mcpe\protocol\ActorEventPacket;
 use pocketmine\network\mcpe\protocol\ActorPickRequestPacket;
 use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
+use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\BlockPickRequestPacket;
 use pocketmine\network\mcpe\protocol\BookEditPacket;
@@ -55,6 +56,7 @@ use pocketmine\network\mcpe\protocol\PlayerHotbarPacket;
 use pocketmine\network\mcpe\protocol\PlayerInputPacket;
 use pocketmine\network\mcpe\protocol\PlayerSkinPacket;
 use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
+use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
 use pocketmine\network\mcpe\protocol\ResourcePackChunkRequestPacket;
 use pocketmine\network\mcpe\protocol\ResourcePackClientResponsePacket;
 use pocketmine\network\mcpe\protocol\RespawnPacket;
@@ -98,6 +100,10 @@ class PlayerNetworkSessionAdapter extends NetworkSession{
 		$timings = Timings::getReceiveDataPacketTimings($packet);
 		$timings->startTiming();
 
+		if($packet instanceof BatchPacket && !$this->player->enableCompression){
+			$packet->compressionEnabled = false;
+		}
+
 		$packet->decode();
 		if(!$packet->feof() and !$packet->mayHaveUnreadBytes()){
 			$remains = substr($packet->buffer, $packet->offset);
@@ -105,6 +111,7 @@ class PlayerNetworkSessionAdapter extends NetworkSession{
 		}
 
 		$ev = new DataPacketReceiveEvent($this->player, $packet);
+
 		$ev->call();
 		if(!$ev->isCancelled() and !$packet->handle($this)){
 			$this->server->getLogger()->debug("Unhandled " . $packet->getName() . " received from " . $this->player->getName() . ": " . base64_encode($packet->buffer));
@@ -317,5 +324,9 @@ class PlayerNetworkSessionAdapter extends NetworkSession{
 
 	public function handleNetworkStackLatency(NetworkStackLatencyPacket $packet) : bool{
 		return true; //TODO: implement this properly - this is here to silence debug spam from MCPE dev builds
+	}
+
+	public function handleRequestNetworkSettings(RequestNetworkSettingsPacket $packet):bool{
+		return$this->player->handleRequestNetworkSettings($packet);
 	}
 }

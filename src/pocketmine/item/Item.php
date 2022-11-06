@@ -24,7 +24,6 @@ declare(strict_types=1);
 /**
  * All the Item classes
  */
-
 namespace pocketmine\item;
 
 use pocketmine\block\Block;
@@ -235,12 +234,12 @@ class Item implements ItemIds, \JsonSerializable{
 	}
 
 	/**
-	 * @param CompoundTag|string|null $tags
-	 *
-	 * @return $this
 	 * @deprecated This method accepts NBT serialized in a network-dependent format.
 	 * @see Item::setNamedTag()
 	 *
+	 * @param CompoundTag|string|null $tags
+	 *
+	 * @return $this
 	 */
 	public function setCompoundTag($tags) : Item{
 		if($tags instanceof CompoundTag){
@@ -814,16 +813,14 @@ class Item implements ItemIds, \JsonSerializable{
 
 	/**
 	 * Returns an Item from properties created in an array by {@link Item#jsonSerialize}
-	 *
 	 * @param mixed[] $data
-	 *
 	 * @phpstan-param array{
-	 *    id: int,
-	 *    damage?: int,
-	 *    count?: int,
-	 *    nbt?: string,
-	 *    nbt_hex?: string,
-	 *    nbt_b64?: string
+	 * 	id: int,
+	 * 	damage?: int,
+	 * 	count?: int,
+	 * 	nbt?: string,
+	 * 	nbt_hex?: string,
+	 * 	nbt_b64?: string
 	 * } $data
 	 */
 	final public static function jsonDeserialize(array $data) : Item{

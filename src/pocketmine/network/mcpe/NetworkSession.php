@@ -70,6 +70,7 @@ use pocketmine\network\mcpe\protocol\CraftingEventPacket;
 use pocketmine\network\mcpe\protocol\CreatePhotoPacket;
 use pocketmine\network\mcpe\protocol\CreativeContentPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
+use pocketmine\network\mcpe\protocol\DeathInfoPacket;
 use pocketmine\network\mcpe\protocol\DebugInfoPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\EducationSettingsPacket;
@@ -134,12 +135,14 @@ use pocketmine\network\mcpe\protocol\PlaySoundPacket;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
 use pocketmine\network\mcpe\protocol\PositionTrackingDBClientRequestPacket;
 use pocketmine\network\mcpe\protocol\PositionTrackingDBServerBroadcastPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\PurchaseReceiptPacket;
 use pocketmine\network\mcpe\protocol\RemoveActorPacket;
 use pocketmine\network\mcpe\protocol\RemoveEntityPacket;
 use pocketmine\network\mcpe\protocol\RemoveObjectivePacket;
 use pocketmine\network\mcpe\protocol\RemoveVolumeEntityPacket;
 use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
+use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
 use pocketmine\network\mcpe\protocol\ResourcePackChunkDataPacket;
 use pocketmine\network\mcpe\protocol\ResourcePackChunkRequestPacket;
 use pocketmine\network\mcpe\protocol\ResourcePackClientResponsePacket;
@@ -189,6 +192,8 @@ use pocketmine\network\mcpe\protocol\TakeItemActorPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
 use pocketmine\network\mcpe\protocol\TickSyncPacket;
 use pocketmine\network\mcpe\protocol\TransferPacket;
+use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
+use pocketmine\network\mcpe\protocol\UpdateAdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\UpdateAttributesPacket;
 use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\network\mcpe\protocol\UpdateBlockSyncedPacket;
@@ -894,6 +899,22 @@ abstract class NetworkSession{
 	}
 
 	public function handleCodeBuilderSource(CodeBuilderSourcePacket $packet) : bool{
+		return false;
+	}
+
+	public function handleUpdateAbilities(UpdateAbilitiesPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleUpdateAdventureSettings(UpdateAdventureSettingsPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleDeathInfo(DeathInfoPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleRequestNetworkSettings(RequestNetworkSettingsPacket $packet): bool{
 		return false;
 	}
 }

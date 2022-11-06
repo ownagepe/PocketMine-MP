@@ -38,6 +38,10 @@ class SetActorDataPacket extends DataPacket{
 	 */
 	public $metadata;
 
+
+
+
+
 	/** @var int */
 	public $tick = 0;
 
@@ -45,11 +49,14 @@ class SetActorDataPacket extends DataPacket{
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->metadata = $this->getEntityMetadata();
 		$this->tick = $this->getUnsignedVarLong();
+
 	}
 
 	protected function encodePayload(){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putEntityMetadata($this->metadata);
+        $this->putVarInt(0);
+        $this->putVarInt(0);
 		$this->putUnsignedVarLong($this->tick);
 	}
 

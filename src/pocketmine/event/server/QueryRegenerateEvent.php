@@ -88,7 +88,7 @@ class QueryRegenerateEvent extends ServerEvent{
 
 		$this->gametype = ($server->getGamemode() & 0x01) === 0 ? "SMP" : "CMP";
 		$this->version = $server->getVersion();
-		$this->server_engine = "ligma 2.0";
+		$this->server_engine = "PocketMine 3.0-OWPE";
 		$this->map = "just join the server??";
 		$this->numPlayers = count($this->players);
 		$this->maxPlayers = $server->getMaxPlayers();
@@ -235,7 +235,7 @@ class QueryRegenerateEvent extends ServerEvent{
 			"gametype" => $this->gametype,
 			"game_id" => self::GAME_ID,
 			"version" => $this->version,
-			"server_engine" => "pocket nutz 42.0",
+			"server_engine" => "PocketMine 3.0-OWPE",
 			"plugins" => "ligma 2.0",
 			"map" => "just join the server??",
 			"numplayers" => $this->numPlayers,
@@ -263,6 +263,6 @@ class QueryRegenerateEvent extends ServerEvent{
 	}
 
 	public function getShortQuery() : string{
-		return $this->shortQueryCache ?? ($this->shortQueryCache = $this->serverName . "\x00" . $this->gametype . "\x00" . "just join the server??" . "\x00" . $this->numPlayers . "\x00" . $this->maxPlayers . "\x00" . Binary::writeLShort($this->port) . $this->ip . "\x00");
+		return $this->shortQueryCache ?? ($this->shortQueryCache = $this->serverName . "\x00" . $this->gametype . "\x00" . $this->map . "\x00" . $this->numPlayers . "\x00" . $this->maxPlayers . "\x00" . Binary::writeLShort($this->port) . $this->ip . "\x00");
 	}
 }

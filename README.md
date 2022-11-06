@@ -1,5 +1,6 @@
 ## Features/Changes
-- Support for v1.19.10
+- Support for v1.19.40
+- [NEW] Log crashes to a webhook (setup in crash-webhook-logging.yml file when server starts up)
 - Server will not crash from errors (unless a crashloop occurs)
 - Removed internal server error
 - Compatible with plugins using `ItemBlock::write()` methods

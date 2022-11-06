@@ -35,6 +35,7 @@ use pocketmine\utils\AssumptionFailedError;
 abstract class Spawnable extends Tile{
 	/** @var string|null */
 	private $spawnCompoundCache = null;
+	private $baseCompoundCache = null;
 	/** @var NetworkLittleEndianNBTStream|null */
 	private static $nbtWriter = null;
 
@@ -81,8 +82,6 @@ abstract class Spawnable extends Tile{
 	protected function onChanged() : void{
 		$this->spawnCompoundCache = null;
 		$this->spawnToAll();
-
-		$this->level->clearChunkCache($this->getFloorX() >> 4, $this->getFloorZ() >> 4);
 	}
 
 	/**
@@ -103,6 +102,25 @@ abstract class Spawnable extends Tile{
 		}
 
 		return $this->spawnCompoundCache;
+	}
+
+	final public function getBaseSerializedSpawnCompound(): string{
+		if($this->baseCompoundCache === null){
+			if(self::$nbtWriter === null){
+				self::$nbtWriter = new NetworkLittleEndianNBTStream();
+			}
+
+			$spawnCompoundCache = self::$nbtWriter->write(new CompoundTag("", [
+				new StringTag(self::TAG_ID, static::getSaveId()),
+				new IntTag(self::TAG_X, $this->x),
+				new IntTag(self::TAG_Y, $this->y),
+				new IntTag(self::TAG_Z, $this->z)
+			]));
+			if($spawnCompoundCache === false) throw new AssumptionFailedError("NBTStream->write() should not return false when given a CompoundTag");
+			$this->baseCompoundCache = $spawnCompoundCache;
+		}
+
+		return $this->baseCompoundCache;
 	}
 
 	final public function getSpawnCompound() : CompoundTag{

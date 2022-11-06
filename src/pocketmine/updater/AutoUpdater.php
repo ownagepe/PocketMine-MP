@@ -52,10 +52,6 @@ class AutoUpdater{
 	public function __construct(Server $server, string $endpoint){
 		$this->server = $server;
 		$this->endpoint = "http://$endpoint/api/";
-
-		if((bool) $server->getProperty("auto-updater.enabled", true)){
-			$this->doCheck();
-		}
 	}
 
 	/**

@@ -35,7 +35,7 @@ class ModalFormResponsePacket extends DataPacket{
 	/** @var string */
 	public $formData; //json
 
-    public $cancelReason;
+	public $cancelReason;
 
 	protected function decodePayload(){
 		$this->formId = $this->getUnsignedVarInt();
@@ -43,11 +43,11 @@ class ModalFormResponsePacket extends DataPacket{
 		$this->cancelReason = $this->getByte() === 1 ? $this->getByte() : null;
 	}
 
+
 	protected function encodePayload(){
 		$this->putUnsignedVarInt($this->formId);
 		$this->putString($this->formData);
 	}
-
 	public function handle(NetworkSession $session) : bool{
 		return $session->handleModalFormResponse($this);
 	}

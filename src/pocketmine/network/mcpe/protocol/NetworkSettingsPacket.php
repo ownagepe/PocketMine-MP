@@ -27,34 +27,67 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\network\mcpe\NetworkSession;
 
-class NetworkSettingsPacket extends DataPacket/* implements ClientboundPacket*/{
+class NetworkSettingsPacket extends DataPacket/* implements ClientboundPacket*/
+{
 	public const NETWORK_ID = ProtocolInfo::NETWORK_SETTINGS_PACKET;
 
 	public const COMPRESS_NOTHING = 0;
 	public const COMPRESS_EVERYTHING = 1;
 
 	/** @var int */
-	private $compressionThreshold;
+	public $compressionThreshold;
+	public int $compressionAlgorithm;
+	public bool $enableClientThrottling;
+	public int $clientThrottleThreshold;
+	public float $clientThrottleScalar;
 
-	public static function create(int $compressionThreshold) : self{
+	public static function create(int $compressionThreshold):self{
 		$result = new self;
 		$result->compressionThreshold = $compressionThreshold;
 		return $result;
 	}
 
-	public function getCompressionThreshold() : int{
+	public function getCompressionThreshold():int{
 		return $this->compressionThreshold;
 	}
 
-	protected function decodePayload() : void{
+	public function getCompressionAlgorithm():int{
+		return $this->compressionAlgorithm;
+	}
+
+	public function isEnableClientThrottling():bool{
+		return $this->enableClientThrottling;
+	}
+
+	public function getClientThrottleThreshold():int{
+		return $this->clientThrottleThreshold;
+	}
+
+	public function getClientThrottleScalar():float{
+		return $this->clientThrottleScalar;
+	}
+
+	public function canBeSentBeforeLogin():bool{
+		return true;
+	}
+
+	protected function decodePayload():void{
 		$this->compressionThreshold = $this->getLShort();
+		$this->compressionAlgorithm = $this->getLShort();
+		$this->enableClientThrottling = $this->getBool();
+		$this->clientThrottleThreshold = $this->getByte();
+		$this->clientThrottleScalar = $this->getLFloat();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload():void{
 		$this->putLShort($this->compressionThreshold);
+		$this->putLShort($this->compressionAlgorithm);
+		$this->putBool($this->enableClientThrottling);
+		$this->putByte($this->clientThrottleThreshold);
+		$this->putLFloat($this->clientThrottleScalar);
 	}
 
-	public function handle(NetworkSession $handler) : bool{
+	public function handle(NetworkSession $handler):bool{
 		return $handler->handleNetworkSettings($this);
 	}
 }

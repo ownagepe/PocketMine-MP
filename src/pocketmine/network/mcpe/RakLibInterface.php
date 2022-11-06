@@ -27,6 +27,7 @@ use pocketmine\event\player\PlayerCreationEvent;
 use pocketmine\network\AdvancedSourceInterface;
 use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
+use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\Network;
 use pocketmine\Player;
@@ -54,7 +55,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 	 * Sometimes this gets changed when the MCPE-layer protocol gets broken to the point where old and new can't
 	 * communicate. It's important that we check this to avoid catastrophes.
 	 */
-	private const MCPE_RAKNET_PROTOCOL_VERSION = 10;
+	private const MCPE_RAKNET_PROTOCOL_VERSION = 11;
 
 	private const MCPE_RAKNET_PACKET_ID = "\xfe";
 
@@ -173,18 +174,27 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 						throw new \UnexpectedValueException("Unexpected non-FE packet");
 					}
 
+
 					$cipher = $player->getCipher();
 					$buffer = substr($packet->buffer, 1);
 					$buffer = $cipher !== null ? $cipher->decrypt($buffer) : $buffer;
 
 					$pk = new BatchPacket(self::MCPE_RAKNET_PACKET_ID . $buffer);
+
+					if(!$player->enableCompression){
+						$pk->compressionEnabled = false;
+					}
+
 					$player->handleDataPacket($pk);
 				}
 			}catch(\Throwable $e){
 				$logger = $this->server->getLogger();
 				$logger->debug("Packet " . (isset($pk) ? get_class($pk) : "unknown") . ": " . base64_encode($packet->buffer));
 				$logger->logException($e);
+
+				$logger->logException($e);
 				$player->sendMessage("§b> §cAn internal server error occurred");
+
 			}
 		}
 	}
@@ -247,7 +257,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		}
 	}
 
-	public function putPacket(Player $player, DataPacket $packet, bool $needACK = false, bool $immediate = true){
+	public function putPacket(Player $player, DataPacket $packet, bool $needACK = false, bool $immediate = true, bool $compress = false){
 		if(isset($this->identifiers[$h = spl_object_hash($player)])){
 			$identifier = $this->identifiers[$h];
 			if(!$packet->isEncoded){
@@ -268,7 +278,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 				$this->interface->sendEncapsulated($identifier, $pk, ($needACK ? RakLib::FLAG_NEED_ACK : 0) | ($immediate ? RakLib::PRIORITY_IMMEDIATE : RakLib::PRIORITY_NORMAL));
 				return $pk->identifierACK;
 			}else{
-				$this->server->batchPackets([$player], [$packet], true, $immediate);
+				$this->server->batchPackets([$player], [$packet], true, $immediate, $compress);
 				return null;
 			}
 		}

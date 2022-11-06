@@ -35,14 +35,16 @@ class MapInfoRequestPacket extends DataPacket{
 
 	protected function decodePayload(){
 		$this->mapId = $this->getEntityUniqueId();
-        for ($i = 0, $count = $this->getVarInt(); $i < $count; $i++) {
-            $this->getLInt();
-            $this->getLShort();
-        }
+		for($i = 0, $count = $this->getLInt();$i < $count;$i++) {
+			$this->getLInt();
+			$this->getLShort();
+		}
 	}
 
 	protected function encodePayload(){
 		$this->putEntityUniqueId($this->mapId);
+		$this->putLInt(1);
+		$this->putLShort(1);
 	}
 
 	public function handle(NetworkSession $session) : bool{
